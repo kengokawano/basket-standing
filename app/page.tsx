@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [season, setSeason] = useState('2023-24');
   const [seasonType, setSeasonType] = useState('Regular Season');
   const [loading, setLoading] = useState(false);
+  const [dateTime, setDateTime] = useState('');
+
+  useEffect(() => {
+    const now = new Date();
+    const formattedDateTime = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    setDateTime(formattedDateTime);
+  }, []);
 
   const downloadStandings = async () => {
     setLoading(true);
@@ -38,7 +45,7 @@ export default function Home() {
   return (
     <div className="font-sans min-h-screen p-8">
       <main className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">NBA順位表ダウンロード</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center">NBA順位表ダウンロード ({dateTime})</h1>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
           <div className="space-y-6">

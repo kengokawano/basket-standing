@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -16,28 +17,28 @@ export async function GET(request: NextRequest) {
   const url = `https://stats.nba.com/stats/leaguestandingsv3?LeagueID=${leagueId}&Season=${season}&SeasonType=${encodeURIComponent(seasonType)}&SeasonYear=`;
 
   try {
-    // シンプルなfetchでtry、axiosライブラリのアプローチを参考
-    const response = await fetch(url, {
-      method: 'GET',
+    const response = await axios.get(url, {
       headers: {
-        'Accept': 'application/json',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
         'Referer': 'https://www.nba.com/',
         'Origin': 'https://www.nba.com',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site'
       }
     });
 
-    if (!response.ok) {
-      console.error(`NBA API error: ${response.status}`);
-      // 参考リポジトリのようにエラー時は空配列を返す
-      return NextResponse.json({ error: `API error: ${response.status}` }, { status: response.status });
+    return NextResponse.json(response.data);
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error(`NBA API error: ${error.response.status}`);
+      return NextResponse.json({ error: `API error: ${error.response.status}` }, { status: error.response.status });
     }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
     console.error('NBA API fetch error:', error);
-    // 参考リポジトリのようにエラー時は空の結果を返す
     return NextResponse.json({ error: 'Failed to fetch NBA data', standings: [] }, { status: 500 });
   }
 }
