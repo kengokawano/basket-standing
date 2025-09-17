@@ -1,103 +1,95 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [season, setSeason] = useState('2023-24');
+  const [seasonType, setSeasonType] = useState('Regular Season');
+  const [loading, setLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const downloadStandings = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/standings?season=${season}&seasonType=${encodeURIComponent(seasonType)}`);
+
+      if (!response.ok) {
+        throw new Error('データの取得に失敗しました');
+      }
+
+      const data = await response.json();
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `nba_standings_${season}_${seasonType.replace(' ', '_')}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('データのダウンロードに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="font-sans min-h-screen p-8">
+      <main className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-center">NBA順位表ダウンロード</h1>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="season" className="block text-sm font-medium mb-2">
+                シーズン
+              </label>
+              <select
+                id="season"
+                value={season}
+                onChange={(e) => setSeason(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="2023-24">2023-24</option>
+                <option value="2022-23">2022-23</option>
+                <option value="2021-22">2021-22</option>
+                <option value="2020-21">2020-21</option>
+                <option value="2019-20">2019-20</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="seasonType" className="block text-sm font-medium mb-2">
+                シーズンタイプ
+              </label>
+              <select
+                id="seasonType"
+                value={seasonType}
+                onChange={(e) => setSeasonType(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="Regular Season">レギュラーシーズン</option>
+                <option value="Pre Season">プレシーズン</option>
+              </select>
+            </div>
+
+            <button
+              onClick={downloadStandings}
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-md transition-colors"
+            >
+              {loading ? 'ダウンロード中...' : 'JSONをダウンロード'}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-8 text-sm text-gray-600 dark:text-gray-400">
+          <p>このツールはNBA公式APIから順位表データを取得し、JSON形式でダウンロードします。</p>
+          <p className="mt-2">取得されるデータには、チーム情報、勝敗記録、順位などが含まれます。</p>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
