@@ -16,46 +16,28 @@ export async function GET(request: NextRequest) {
   const url = `https://stats.nba.com/stats/leaguestandingsv3?LeagueID=${leagueId}&Season=${season}&SeasonType=${encodeURIComponent(seasonType)}&SeasonYear=`;
 
   try {
+    // シンプルなfetchでtry、axiosライブラリのアプローチを参考
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Connection': 'keep-alive',
-        'Host': 'stats.nba.com',
+        'Accept': 'application/json',
         'Referer': 'https://www.nba.com/',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'cross-site',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'x-nba-stats-origin': 'stats',
-        'x-nba-stats-token': 'true'
-      },
-      cache: 'no-cache'
+        'Origin': 'https://www.nba.com',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`NBA API error: ${response.status} - ${errorText}`);
-      throw new Error(`NBA API error: ${response.status} - ${response.statusText}`);
+      console.error(`NBA API error: ${response.status}`);
+      // 参考リポジトリのようにエラー時は空配列を返す
+      return NextResponse.json({ error: `API error: ${response.status}` }, { status: response.status });
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('NBA API error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      url,
-      error
-    });
-    return NextResponse.json(
-      {
-        error: 'NBA APIからデータを取得できませんでした',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        url: url
-      },
-      { status: 500 }
-    );
+    console.error('NBA API fetch error:', error);
+    // 参考リポジトリのようにエラー時は空の結果を返す
+    return NextResponse.json({ error: 'Failed to fetch NBA data', standings: [] }, { status: 500 });
   }
 }
