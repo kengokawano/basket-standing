@@ -17,30 +17,44 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(url, {
+      method: 'GET',
       headers: {
-        'Accept': 'application/json',
-        'Referer': 'https://www.nba.com',
-        'Origin': 'https://www.nba.com',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'en-US,en;q=0.9',
         'Connection': 'keep-alive',
+        'Host': 'stats.nba.com',
+        'Referer': 'https://www.nba.com/',
         'Sec-Fetch-Dest': 'empty',
         'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-      }
+        'Sec-Fetch-Site': 'cross-site',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'x-nba-stats-origin': 'stats',
+        'x-nba-stats-token': 'true'
+      },
+      cache: 'no-cache'
     });
 
     if (!response.ok) {
-      throw new Error(`NBA API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`NBA API error: ${response.status} - ${errorText}`);
+      throw new Error(`NBA API error: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('NBA API error:', error);
+    console.error('NBA API error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      url,
+      error
+    });
     return NextResponse.json(
-      { error: 'NBA APIからデータを取得できませんでした' },
+      {
+        error: 'NBA APIからデータを取得できませんでした',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        url: url
+      },
       { status: 500 }
     );
   }
