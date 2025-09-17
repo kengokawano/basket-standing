@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(response.data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (axios.isAxiosError(error) && error.response) {
       console.error(`NBA API error: ${error.response.status}`);
       return NextResponse.json({ error: `API error: ${error.response.status}` }, { status: error.response.status });
